@@ -63,3 +63,5 @@ dist/
 # IDE
 .idea
 .iml
+
+build/

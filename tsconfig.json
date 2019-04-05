@@ -12,8 +12,11 @@
     "strictPropertyInitialization": true,
     "target": "ES6",
     "typeRoots" : ["types", "node_modules/@types"],
-    "outDir": "build"
+    "outDir": "dist",
   },
+  "include": [
+    "src/**/*.ts"
+  ],
   "exclude": [
     "node_modules"
   ]

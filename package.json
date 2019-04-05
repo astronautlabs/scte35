@@ -1,12 +1,13 @@
 {
-  "name": "scte35",
-  "version": "0.2.0",
+  "name": "@rezonant/scte35",
+  "version": "0.2.0-beta.1",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "directories": {
     "lib": "lib",
     "test": "test"
   },
+  "typings": "./dist/index.d.ts",
   "scripts": {
     "clean": "rimraf dist",
     "pretest": "npm run clean && tsc --project ./test/tsconfig.json",
