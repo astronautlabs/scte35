@@ -16,16 +16,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as chai from "chai";
+import { expect } from "chai";
 import * as scte35 from "../lib/scte35";
+import { describe } from "razmin";
 
-describe("SCTE35", () => {
+describe("SCTE35 (Comcast)", it => {
 
     it("should parse from base64", () => {
         const base64 = "/DBGAAET8J+pAP/wBQb+AAAAAAAwAi5DVUVJQAErgX+/CR9TSUdOQUw6OGlTdzllUWlGVndBQUFBQUFBQUJCQT09NwMDaJ6RZQ==";
         const spliceInfo = scte35.SCTE35.parseFromB64(base64);
         // Confirms that all 33 bits are read correctly
-        chai.expect(spliceInfo.ptsAdjustment).to.eq(4629503913);
+
+        console.dir(spliceInfo);
+
+        expect(spliceInfo.ptsAdjustment).to.eq(4629503913);
     });
 
     it("should parse from base64", () => {
@@ -38,7 +42,7 @@ describe("SCTE35", () => {
         const base64 = "/DBoAAFDizjpAP/wBQb/ebGh8wBSAhhDVUVJXAJwnn+3AQlIREkwMzA0MDghAQACGkNVRUlcAnC6f/cAAZUdEwEGUFMxODgxNAAAAhpDVUVJXAJwu3/3AAApMbEBBlBTMTg4MTAAABLEqgg=";
         const spliceInfo = scte35.SCTE35.parseFromB64(base64);
         // Confirms that all 33 bits are read correctly
-        chai.expect(spliceInfo.ptsAdjustment).to.eq(5428164841);
+        expect(spliceInfo.ptsAdjustment).to.eq(5428164841);
     });
 
     it("should parse from base64", () => {
@@ -57,7 +61,7 @@ describe("SCTE35", () => {
         const base64 = "fc3046000113f09fa900fff00506fe000000000030022e4355454940012b817fbf091f5349474e414c3a386953773965516946567741414141414141414242413d3d370303689e9165";
         const spliceInfo = scte35.SCTE35.parseFromHex(base64);
         // Confirms that all 33 bits are read correctly
-        chai.expect(spliceInfo.ptsAdjustment).to.eq(4629503913);
+        expect(spliceInfo.ptsAdjustment).to.eq(4629503913);
     });
 
 });

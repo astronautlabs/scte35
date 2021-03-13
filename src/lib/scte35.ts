@@ -31,6 +31,14 @@ export interface IUTCSpliceComponent extends ISpliceComponent {
     utcSpliceTime: number;
 }
 
+function decodeBase64(v) {
+    if (typeof atob !== 'undefined') {
+        return atob(v);
+    }
+
+    return Buffer.from(v, 'base64').toString('binary');
+}
+
 export interface ISpliceEvent {
     spliceEventId: number;
     spliceEventCancelIndicator: boolean;
@@ -318,7 +326,7 @@ const parseSCTE35Data = (bytes: Uint8Array): ISpliceInfoSection => {
 }
 
 SCTE35.parseFromB64 = (b64: string): ISpliceInfoSection => {
-    const bytes = Uint8Array.from(atob(b64).split("").map((c) => c.charCodeAt(0)));
+    const bytes = Uint8Array.from(decodeBase64(b64).split("").map((c) => c.charCodeAt(0)));
     return parseSCTE35Data(bytes);
 }
 
