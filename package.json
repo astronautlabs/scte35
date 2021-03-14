@@ -1,6 +1,9 @@
 {
   "name": "@astronautlabs/scte35",
   "access": "public",
+  "publishConfig": {
+    "access": "public"
+  },
   "version": "0.0.1",
   "description": "Implements the SCTE-35 standard",
   "main": "dist/index.js",
