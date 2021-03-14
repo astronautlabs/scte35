@@ -1,1 +1,1 @@
-export * from './lib/syntax';
+export * from './syntax';

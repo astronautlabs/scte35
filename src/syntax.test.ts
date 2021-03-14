@@ -2,7 +2,6 @@ import { describe } from "razmin";
 import { expect } from "chai";
 import { NewInsertedSplice, NewSegmentationDescriptor, SpliceInfoSection, TimeSignalSplice } from "./syntax";
 import { BitstreamReader, BitstreamWriter } from "@astronautlabs/bitstream";
-import * as scte35 from './scte35';
 import { WritableStreamBuffer } from 'stream-buffers';
 import { crc32b } from "./crc32";
 
@@ -20,7 +19,6 @@ describe("CRC32", it => {
     });
 
     it('verifies all samples', async () => {
-        // https://crccalc.com/
         let samples = [
             "/DBGAAET8J+pAP/wBQb+AAAAAAAwAi5DVUVJQAErgX+/CR9TSUdOQUw6OGlTdzllUWlGVndBQUFBQUFBQUJCQT09NwMDaJ6RZQ==",
             "/DBvAAFDizjpAP/wBQb+K9F+MgBZAhlDVUVJXAL02n+3AQpIRDExMjM0OFQxIQEAAh1DVUVJXAL2U3/3AAGb/KUBCUhEQ00xMDY0ODQAAAIdQ1VFSVwC9lR/9wAAKTGxAQlIRENNMTA2NDgwAADHDHPR",
@@ -83,16 +81,9 @@ describe("SCTE35", () => {
                     console.log(` -        Checksum: 0x${crc32b(content).toString(16)} [${crc32b(content)}]`);
                     console.log(` - 1st trip base64: ${base64}`);
                     console.log(` - 2nd trip base64: ${newBase64}`);
-                    const cs35 = scte35.SCTE35.parseFromB64(base64);
-                    console.log(` - 1st trip CS35:`);
-                    console.dir(cs35);
-
+                    
                     console.log(` - 1st trip @/scte35:`);
                     console.dir(spliceInfo);
-
-                    const cs35_2 = scte35.SCTE35.parseFromB64(newBase64);
-                    console.log(` - 2nd trip CS35:`);
-                    console.dir(cs35_2);
 
                     globalThis.BITSTREAM_TRACE = true;
                     const reader = new BitstreamReader();
@@ -139,10 +130,6 @@ describe("SCTE35", () => {
             const base64 = '/DBvAAFDizjpAP/wBQb+K9F+MgBZAhlDVUVJXAL02n+3AQpIRDExMjM0OFQxIQEAAh1DVUVJXAL2U3/3AAGb/KUBCUhEQ00xMDY0ODQAAAIdQ1VFSVwC9lR/9wAAKTGxAQlIRENNMTA2NDgwAADHDHPR';
             const reader = new BitstreamReader();
             reader.addBuffer(Buffer.from(base64, 'base64'));
-    
-            // const cs35 = scte35.SCTE35.parseFromB64(base64);
-            // console.log(`CS35 (L1):`);
-            // console.dir(cs35);
 
             let spliceInfo = await SpliceInfoSection.read(reader);
             //console.dir(spliceInfo);
@@ -189,10 +176,6 @@ describe("SCTE35", () => {
             const base64 = '/DBvAAFDizjpAP/wBQb+K9F+MgBZAhlDVUVJXAL02n+3AQpIRDExMjM0OFQxIQEAAh9DVUVJXAL2U3/3AAGb/KUBCUhEQ00xMDY0ODQAAAECAh1DVUVJXAL2VH/3AAApMbEBCUhEQ00xMDY0ODAAAMcMc9E=';
             const reader = new BitstreamReader();
             reader.addBuffer(Buffer.from(base64, 'base64'));
-    
-            // const cs35 = scte35.SCTE35.parseFromB64(base64);
-            // console.log(`CS35 (L1):`);
-            // console.dir(cs35);
 
             let spliceInfo = await SpliceInfoSection.read(reader);
             //console.dir(spliceInfo);
@@ -238,10 +221,6 @@ describe("SCTE35", () => {
             const base64 = '/DAgAAAAAAAAAAAADwXgABFYf//+AUmXAAAAAAAAAGUNffk=';
             const reader = new BitstreamReader();
             reader.addBuffer(Buffer.from(base64, 'base64'));
-    
-            // const cs35 = scte35.SCTE35.parseFromB64(base64);
-            // console.log(`CS35 (L1):`);
-            // console.dir(cs35);
 
             let spliceInfo = await SpliceInfoSection.read(reader);
             expect(spliceInfo.checksum).to.equal(1695383033);
@@ -279,11 +258,6 @@ describe("SCTE35", () => {
         });
         it('can read a 3.5m splice insert', async () => {
             const base64 = "/DAlAAAAAAAAAP/wFAUACGxOf+//4Gcd9f4BIPDAAAAAAAAAnIWhIw=="; // 3.5m splice insert
-
-            //const spliceInfo = scte35.SCTE35.parseFromB64(base64);
-            //console.log(`CS35 (L1):`);
-            //console.dir(cs35);
-
             const reader = new BitstreamReader();
             reader.addBuffer(Buffer.from(base64, 'base64'));
     
