@@ -13,7 +13,8 @@
     "clean": "rimraf dist",
     "test": "npm run build && node dist/test",
     "parse": "node ./scripts/cli.js",
-    "build": "npm run clean && tsc"
+    "build": "npm run clean && tsc",
+    "prepublishOnly": "npm test"
   },
   "repository": {
     "type": "git",
