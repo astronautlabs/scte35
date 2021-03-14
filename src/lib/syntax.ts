@@ -40,13 +40,26 @@ export const SPLICE_COMMAND_PRIVATE_COMMAND = 0xff;
 
 export class SpliceDescriptor extends BitstreamElement {
     @Field(8) tag : number;
-    @Field(8) length : number;
+    @Field(8, { 
+        writtenValue: (i : SpliceDescriptor) => Math.ceil(i.measure(i => i.$startOfDescriptor, i => i.$endOfDescriptor) / 8) 
+    })
+    length : number;
+
+    @Field(0) $startOfDescriptor;
     @Field(4, { string: { encoding: 'ascii' }}) identifier : string; // "CUEI" for SCTE-35
+    @VariantMarker() $variant;
+
+    @Field(0) $endOfDescriptorSyntax;
+    
+    @Field(i => i.length - i.measure(i => i.$startOfDescriptor, i => i.$endOfDescriptorSyntax) / 8) 
+    remainder : Buffer;
+
+    @Field(0) $endOfDescriptor;
 }
 
 @DefaultVariant()
 export class UnknownSpliceDescriptor extends SpliceDescriptor {
-    @Field(((i : SpliceDescriptor) => i.length * 8 - i.measureFrom(i => i.identifier)))
+    @Field((i : SpliceDescriptor) => (i.length * 8 - i.measureFrom(i => i.identifier)) / 8)
     private : Buffer;
 }
 
@@ -55,19 +68,37 @@ export class SpliceInfoSection extends BitstreamElement {
     @Field(1) sectionSyntax : boolean;
     @Field(1) private : boolean;
     @Reserved(2) reserved : number;
-    @Field(12) sectionLength : number;
+
+    @Field(12, { writtenValue: (i : SpliceInfoSection) => Math.ceil(i.measureFrom(i => i.protocolVersion) / 8) }) 
+    sectionLength : number;
+
     @Field(8) protocolVersion : number;
     @Field(1) encrypted : boolean;
     @Field(6) encryptionAlgorithm : number;
     @Field(33) ptsAdjustment : number;
     @Field(8) cwIndex : number;
     @Field(12) tier : number;
-    @Field(12) spliceCommandLength : number;
+
+    @Field(12, { 
+        writtenValue: (i : SpliceInfoSection) => 
+            Math.ceil(i.measure(i => i.$startOfSpliceCommand, i => i.$endOfSpliceCommand) / 8)
+    })
+    spliceCommandLength : number;
+
     @Field(8) spliceCommandType : number;
+
+    @Field(0) $startOfSpliceCommand : never;
 
     @VariantMarker() $variant;
 
-    @Field(16) descriptorLoopLength : number;
+    @Field(0) $endOfSpliceCommand : never;
+
+    @Field(16, {
+        writtenValue: (i : SpliceInfoSection) => Math.ceil(i.measure(i => i.$startOfDescriptorLoop, i => i.$endOfDescriptorLoop) / 8)
+    })
+    descriptorLoopLength : number;
+
+    @Field(0) $startOfDescriptorLoop : number;
     @Field(0, { 
         array: { 
             hasMore: (i : SpliceInfoSection) => {
@@ -79,6 +110,8 @@ export class SpliceInfoSection extends BitstreamElement {
         }
     })
     descriptors : SpliceDescriptor[];
+
+    @Field(0) $endOfDescriptorLoop : number;
 
     // Encryption is not properly supported here. The amount of stuffing bytes is dependent on the encryption 
     // algorithm expected by the reader and the number of bytes that exist up to this point. 
@@ -170,8 +203,15 @@ export class NewSegmentationDescriptor extends SegmentationDescriptor {
     @Field(8) typeId : number;
     @Field(8) segmentNumber : number;
     @Field(8) segmentsExpected : number;
-    @Field(8, { presentWhen: i => [0x34, 0x36, 0x38, 0x3A].includes(i.typeId) }) subSegmentNumber : number;
-    @Field(8, { presentWhen: i => [0x34, 0x36, 0x38, 0x3A].includes(i.typeId) }) subSegmentsExpected : number;
+    @Field(8, { 
+        presentWhen: i => [0x34, 0x36, 0x38, 0x3A].includes(i.typeId) && (i.length - i.measureFrom(i => i.$startOfDescriptor) / 8) > 0
+    }) 
+    subSegmentNumber : number;
+    
+    @Field(8, { 
+        presentWhen: i => [0x34, 0x36, 0x38, 0x3A].includes(i.typeId) && (i.length - i.measureFrom(i => i.$startOfDescriptor) / 8) > 0
+    }) 
+    subSegmentsExpected : number;
 }
 
 @Variant<SpliceInfoSection>(i => i.spliceCommandType == SPLICE_COMMAND_NULL)

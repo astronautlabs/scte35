@@ -1,12 +1,65 @@
 import { describe } from "razmin";
 import { expect } from "chai";
 import { NewInsertedSplice, NewSegmentationDescriptor, SpliceInfoSection, TimeSignalSplice } from "./syntax";
-import { BitstreamReader } from "@astronautlabs/bitstream";
+import { BitstreamReader, BitstreamWriter } from "@astronautlabs/bitstream";
 import * as scte35 from './scte35';
+import { WritableStreamBuffer } from 'stream-buffers';
 
 describe("SCTE35", () => {
     describe("SpliceInfoSection", it => {
-        it('can handle a TimeSignalSplice with a single segmentation descriptor', async () => {
+        it('can roundtrip all samples', async () => {
+
+            const base64s = [
+                "/DBGAAET8J+pAP/wBQb+AAAAAAAwAi5DVUVJQAErgX+/CR9TSUdOQUw6OGlTdzllUWlGVndBQUFBQUFBQUJCQT09NwMDaJ6RZQ==",
+                "/DBvAAFDizjpAP/wBQb+K9F+MgBZAhlDVUVJXAL02n+/AQpIRDExMjM0OFQxIQEAAh1DVUVJXAL2U3//AAGb/KUBCUhEQ00xMDY0ODQAAAIdQ1VFSVwC9lR//wAAKTGxAQlIRENNMTA2NDgwAADHDHPR",
+                "/DAgAAAAAAAAAAAADwXgABFYf//+AUmXAAAAAAAAAGXUMaQ=",
+                "/DAlAAAAAAAAAP/wFAUACGxOf+//4Gcd9f4BIPDAAAAAAAAAnIWhIw=="
+            ];
+
+            for (let base64 of base64s) {
+                const reader = new BitstreamReader();
+                reader.addBuffer(Buffer.from(base64, 'base64'));
+        
+                let spliceInfo = await SpliceInfoSection.read(reader);
+
+                const streamBuf = new WritableStreamBuffer();
+                const writer = new BitstreamWriter(streamBuf);
+                await spliceInfo.write(writer);
+
+                let buf = <Buffer>streamBuf.getContents();
+                let newBase64 = buf.toString('base64');
+
+                if (newBase64 !== base64) {
+                    
+                    console.log(`Roundtrip failed`);
+                    console.log(` - 1st trip base64: ${base64}`);
+                    console.log(` - 2nd trip base64: ${newBase64}`);
+                    const cs35 = scte35.SCTE35.parseFromB64(base64);
+                    console.log(` - 1st trip CS35:`);
+                    console.dir(cs35);
+
+                    console.log(` - 1st trip @/scte35:`);
+                    console.dir(spliceInfo);
+
+                    const cs35_2 = scte35.SCTE35.parseFromB64(newBase64);
+                    console.log(` - 2nd trip CS35:`);
+                    console.dir(cs35_2);
+
+                    globalThis.BITSTREAM_TRACE = true;
+                    const reader = new BitstreamReader();
+                    reader.addBuffer(Buffer.from(newBase64, 'base64'));
+
+                    let spliceInfo2 = await SpliceInfoSection.read(reader);
+
+                    console.log(` - 2nd trip @/scte35:`);
+                    console.dir(spliceInfo2);
+
+                    throw new Error(`The roundtripped base64 did not match the original!`);
+                }
+            }
+        });
+
+        it('can read a TimeSignalSplice with a single segmentation descriptor', async () => {
             const base64 = "/DBGAAET8J+pAP/wBQb+AAAAAAAwAi5DVUVJQAErgX+/CR9TSUdOQUw6OGlTdzllUWlGVndBQUFBQUFBQUJCQT09NwMDaJ6RZQ==";
             const reader = new BitstreamReader();
             reader.addBuffer(Buffer.from(base64, 'base64'));
@@ -33,11 +86,58 @@ describe("SCTE35", () => {
             }
         });
         
-        // This one is broken. It comes from the Comcast SCTE35 parser test suite but is missing the subSegment bytes
-        //const base64 = '/DBvAAFDizjpAP/wBQb+K9F+MgBZAhlDVUVJXAL02n+3AQpIRDExMjM0OFQxIQEAAh1DVUVJXAL2U3/3AAGb/KUBCUhEQ00xMDY0ODQAAAIdQ1VFSVwC9lR/9wAAKTGxAQlIRENNMTA2NDgwAADHDHPR';
+        it('can read a complex TimeSignalSplice with 3 segmentation descriptors, with one provider opportunity which omits the optional subSegment fields', async() => {
+            const base64 = '/DBvAAFDizjpAP/wBQb+K9F+MgBZAhlDVUVJXAL02n+3AQpIRDExMjM0OFQxIQEAAh1DVUVJXAL2U3/3AAGb/KUBCUhEQ00xMDY0ODQAAAIdQ1VFSVwC9lR/9wAAKTGxAQlIRENNMTA2NDgwAADHDHPR';
+            const reader = new BitstreamReader();
+            reader.addBuffer(Buffer.from(base64, 'base64'));
+    
+            // const cs35 = scte35.SCTE35.parseFromB64(base64);
+            // console.log(`CS35 (L1):`);
+            // console.dir(cs35);
 
-        it('can handle a complex TimeSignalSplice with 3 segmentation descriptors, with one provider opportunity', async() => {
-            const base64 = '/DBvAAFDizjpAP/wBQb+K9F+MgBZAhlDVUVJXAL02n+3AQpIRDExMjM0OFQxIQEAAh1DVUVJXAL2U3/3AAGb/KUBCUhEQ00xMDY0ODQAAAECAh1DVUVJXAL2VH/3AAApMbEBCUhEQ00xMDY0ODAAAMcMc9E=';
+            let spliceInfo = await SpliceInfoSection.read(reader);
+            //console.dir(spliceInfo);
+
+            expect(spliceInfo.tableId).to.equal(252);
+            expect(spliceInfo.checksum).to.equal(3339482065);
+            expect(spliceInfo instanceof TimeSignalSplice).to.be.true;
+            expect(spliceInfo.descriptors.length).to.equal(3);
+            expect(spliceInfo.descriptors[0] instanceof NewSegmentationDescriptor);
+            expect(spliceInfo.descriptors[1] instanceof NewSegmentationDescriptor);
+            expect(spliceInfo.descriptors[2] instanceof NewSegmentationDescriptor);
+
+            let descriptor0 = spliceInfo.descriptors[0];
+            if (descriptor0 instanceof NewSegmentationDescriptor) {
+                expect(descriptor0.upid.toString('ascii')).to.equal('HD112348T1');
+                expect(descriptor0.hasDuration).to.be.false;
+                expect(descriptor0.duration).not.to.exist;
+            }
+
+            let descriptor1 = spliceInfo.descriptors[1];
+            if (descriptor1 instanceof NewSegmentationDescriptor) {
+                expect(descriptor1.upid.toString('ascii')).to.equal('HDCM10648');
+                expect(descriptor1.subSegmentNumber).not.to.exist;
+                expect(descriptor1.subSegmentsExpected).not.to.exist;
+                expect(descriptor1.hasDuration).to.be.true;
+                expect(descriptor1.duration).to.equal(26999973);
+            }
+
+            let descriptor2 = spliceInfo.descriptors[2];
+            if (descriptor2 instanceof NewSegmentationDescriptor) {
+                expect(descriptor2.upid.toString('ascii')).to.equal('HDCM10648');
+                expect(descriptor2.hasDuration).to.be.true;
+                expect(descriptor2.duration).to.equal(2699697);
+            }
+
+            if (spliceInfo instanceof TimeSignalSplice) {
+                expect(spliceInfo.spliceTime).to.exist;
+                expect(spliceInfo.spliceTime.specified).to.be.true;
+                expect(spliceInfo.spliceTime.pts).to.equal(735149618);
+            }
+        });
+
+        it('can read a complex TimeSignalSplice with 3 segmentation descriptors, with one provider opportunity', async() => {
+            const base64 = '/DBvAAFDizjpAP/wBQb+K9F+MgBZAhlDVUVJXAL02n+3AQpIRDExMjM0OFQxIQEAAh9DVUVJXAL2U3/3AAGb/KUBCUhEQ00xMDY0ODQAAAECAh1DVUVJXAL2VH/3AAApMbEBCUhEQ00xMDY0ODAAAMcMc9E=';
             const reader = new BitstreamReader();
             reader.addBuffer(Buffer.from(base64, 'base64'));
     
@@ -85,7 +185,7 @@ describe("SCTE35", () => {
                 expect(spliceInfo.spliceTime.pts).to.equal(735149618);
             }
         });
-        it('can handle an immediate splice insert with 4m duration, with an extra byte appended', async() => {
+        it('can read an immediate splice insert with 4m duration, with an extra byte appended', async() => {
             const base64 = '/DAgAAAAAAAAAAAADwXgABFYf//+AUmXAAAAAAAAAGXUMaS0';
             const reader = new BitstreamReader();
             reader.addBuffer(Buffer.from(base64, 'base64'));
@@ -109,7 +209,7 @@ describe("SCTE35", () => {
                 expect(spliceInfo.breakDuration.duration).to.equal(21600000); // 240 seconds
             }
         })
-        it('can handle a 16s splice insert', async () => {
+        it('can read a 16s splice insert', async () => {
             const base64 = "/DAlAAAAAAAAAP/wFAUACGxPf+//4ZoIo/4AFfkAAAAAAAAAgJ61+A==" // 16s break
             const reader = new BitstreamReader();
             reader.addBuffer(Buffer.from(base64, 'base64'));
@@ -129,7 +229,7 @@ describe("SCTE35", () => {
                 expect(spliceInfo.breakDuration.duration).to.equal(1440000); // 16 seconds
             }
         });
-        it('can handle a 3.5m splice insert', async () => {
+        it('can read a 3.5m splice insert', async () => {
             const base64 = "/DAlAAAAAAAAAP/wFAUACGxOf+//4Gcd9f4BIPDAAAAAAAAAnIWhIw=="; // 3.5m splice insert
 
             //const spliceInfo = scte35.SCTE35.parseFromB64(base64);
