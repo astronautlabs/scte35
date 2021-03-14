@@ -1,15 +1,15 @@
-import { BitstreamElement, Field, Variant, VariantMarker, DefaultVariant } from "@astronautlabs/bitstream";
+import { BitstreamElement, Field, Variant, VariantMarker, DefaultVariant, Reserved } from "@astronautlabs/bitstream";
 
 export class SpliceTime extends BitstreamElement {
     @Field(1) specified : boolean;
-    @Field(6, { presentWhen: i => i.specified }) reserved1 : number;
+    @Reserved(6, { presentWhen: i => i.specified }) reserved1 : number;
     @Field(33, { presentWhen: i => i.specified }) pts : number;
-    @Field(7, { presentWhen: i => !i.specified }) reserved2 : number;
+    @Reserved(7, { presentWhen: i => !i.specified }) reserved2 : number;
 }
 
 export class BreakDuration extends BitstreamElement {
     @Field(1) autoReturn : boolean;
-    @Field(6) reserved : number;
+    @Reserved(6) reserved : number;
     @Field(33) duration : number;
 }
 
@@ -54,7 +54,7 @@ export class SpliceInfoSection extends BitstreamElement {
     @Field(8) tableId : number;
     @Field(1) sectionSyntax : boolean;
     @Field(1) private : boolean;
-    @Field(2) reserved : number;
+    @Reserved(2) reserved : number;
     @Field(12) sectionLength : number;
     @Field(8) protocolVersion : number;
     @Field(1) encrypted : boolean;
@@ -72,7 +72,7 @@ export class SpliceInfoSection extends BitstreamElement {
         array: { 
             hasMore: (i : SpliceInfoSection) => {
                 let remains = i.descriptorLoopLength * 8 - i.measureField(i => i.descriptors);
-                console.log(`******* REMAINS: ${remains}, my size: ${i.measureField(i => i.descriptors)}`);
+                //console.log(`******* REMAINS: ${remains}, my size: ${i.measureField(i => i.descriptors)}`);
                 return remains > 0;
             }, 
             type: SpliceDescriptor 
@@ -105,7 +105,7 @@ export class AvailDescriptor extends SpliceDescriptor {
 export class DTMFDescriptor extends SpliceDescriptor {
     @Field(8) preroll : number;
     @Field(3) dtmfCount : number;
-    @Field(5) reserved : number;
+    @Reserved(5) reserved : number;
     @Field(i => i.dtmfCount) chars : Buffer;
 }
 
@@ -113,7 +113,7 @@ export class DTMFDescriptor extends SpliceDescriptor {
 export class SegmentationDescriptor extends SpliceDescriptor {
     @Field(32) eventId : number;
     @Field(1) canceled : boolean;
-    @Field(7) reserved : number;
+    @Reserved(7) reserved : number;
 }
 
 @Variant((i : SpliceDescriptor) => i.identifier === 'CUEI' && i.tag === 0x03)
@@ -134,14 +134,14 @@ export class AudioDescriptorComponent extends BitstreamElement {
 @Variant((i : SpliceDescriptor) => i.identifier === 'CUEI' && i.tag === 0x04)
 export class AudioDescriptor {
     @Field(4) count : number;
-    @Field(4) reserved : number;
+    @Reserved(4) reserved : number;
     @Field(0, { array: { count: i => i.count, type: AudioDescriptorComponent }})
     components : AudioDescriptorComponent[];
 }
 
 export class SegmentationComponent extends BitstreamElement {
     @Field(8) tag : number;
-    @Field(7) reserved : number;
+    @Reserved(7) reserved : number;
     @Field(33) ptsOffset : number;
 }
 
@@ -154,7 +154,9 @@ export class NewSegmentationDescriptor extends SegmentationDescriptor {
     @Field(1, { presentWhen: i => !i.deliveryNotRestricted }) noRegionalBlackout : boolean;
     @Field(1, { presentWhen: i => !i.deliveryNotRestricted }) archiveAllowed : boolean;
     @Field(2, { presentWhen: i => !i.deliveryNotRestricted }) deviceRestrictions : number;
-    @Field(5, { presentWhen: i => i.deliveryNotRestricted }) reserved : number;
+
+    @Reserved(5, { presentWhen: i => i.deliveryNotRestricted }) 
+    reserved : number;
 
     @Field(0, { array: { countFieldLength: 8, type: SegmentationComponent }, presentWhen: i => !i.hasProgram })
     components : SegmentationComponent[];
@@ -180,7 +182,7 @@ export class SpliceNull extends SpliceInfoSection {
 export class ScheduledSplice extends BitstreamElement {
     @Field(8) id : number;
     @Field(1) canceled : boolean;
-    @Field(7) reserved1 : number;
+    @Reserved(7) reserved1 : number;
 }
 
 export class ComponentSpliceTime extends BitstreamElement {
@@ -192,7 +194,7 @@ export class ComponentSpliceTime extends BitstreamElement {
 export class InsertedSplice extends SpliceInfoSection {
     @Field(32) id : number;
     @Field(1) canceled : boolean;
-    @Field(7) reserved1 : number;
+    @Reserved(7) reserved1 : number;
 }
 
 @Variant<InsertedSplice>(i => i.canceled)
@@ -204,7 +206,7 @@ export class NewInsertedSplice extends InsertedSplice {
     @Field(1) programSplice : boolean;
     @Field(1) duration : boolean;
     @Field(1) immediate : boolean;
-    @Field(4) reserved2 : number;
+    @Reserved(4) reserved2 : number;
 
     @Field(0, { presentWhen: i => i.programSplice && !i.immediate }) 
     time : SpliceTime;
@@ -242,7 +244,7 @@ export class NewScheduledSplice extends ScheduledSplice {
     @Field(1) outOfNetwork : boolean;
     @Field(1) programSplice : boolean;
     @Field(1) duration : boolean;
-    @Field(5) reserved2 : number;
+    @Reserved(5) reserved2 : number;
 
     @Field(32, { presentWhen: i => i.programSplice }) utcSpliceTime : number;
     @Field(32, { array: { countFieldLength: 8, type: ComponentSpliceUTC }, presentWhen: i => !i.programSplice }) 

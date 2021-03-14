@@ -27,7 +27,7 @@ describe("SCTE35 (Comcast)", it => {
         const spliceInfo = scte35.SCTE35.parseFromB64(base64);
         // Confirms that all 33 bits are read correctly
 
-        console.dir(spliceInfo);
+        //console.dir(spliceInfo);
 
         expect(spliceInfo.ptsAdjustment).to.eq(4629503913);
     });
