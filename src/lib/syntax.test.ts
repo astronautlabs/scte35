@@ -13,8 +13,6 @@ describe("SCTE35", () => {
     
             let spliceInfo = await SpliceInfoSection.read(reader);
     
-            // Confirms that all 33 bits are read correctly
-    
             // console.log(`Resulting object:`);
             // console.dir(spliceInfo);
     
