@@ -4,16 +4,60 @@ import { NewInsertedSplice, NewSegmentationDescriptor, SpliceInfoSection, TimeSi
 import { BitstreamReader, BitstreamWriter } from "@astronautlabs/bitstream";
 import * as scte35 from './scte35';
 import { WritableStreamBuffer } from 'stream-buffers';
+import { crc32b } from "./crc32";
+
+describe("CRC32", it => {
+    it('handles the zero byte', async () => {
+        expect(crc32b(Buffer.from([ 0 ]))).to.equal(0x4E08BFB4);
+    });
+    
+    it('handles the one byte', async () => {
+        expect(crc32b(Buffer.from([ 1 ]))).to.equal(0x4AC9A203);
+    });
+    
+    it('handles the two byte', async () => {
+        expect(crc32b(Buffer.from([ 2 ]))).to.equal(0x478A84DA);
+    });
+
+    it('verifies all samples', async () => {
+        // https://crccalc.com/
+        let samples = [
+            "/DBGAAET8J+pAP/wBQb+AAAAAAAwAi5DVUVJQAErgX+/CR9TSUdOQUw6OGlTdzllUWlGVndBQUFBQUFBQUJCQT09NwMDaJ6RZQ==",
+            "/DBvAAFDizjpAP/wBQb+K9F+MgBZAhlDVUVJXAL02n+3AQpIRDExMjM0OFQxIQEAAh1DVUVJXAL2U3/3AAGb/KUBCUhEQ00xMDY0ODQAAAIdQ1VFSVwC9lR/9wAAKTGxAQlIRENNMTA2NDgwAADHDHPR",
+            "/DAgAAAAAAAAAAAADwXgABFYf//+AUmXAAAAAAAAAGUNffkA",
+            "/DAlAAAAAAAAAP/wFAUACGxPf+//4ZoIo/4AFfkAAAAAAAAAgJ61+A=="
+        ];
+
+        for (let sample of samples) {
+            let buf = Buffer.from(sample, "base64");
+            let content = buf.slice(0, buf.length - 4);
+            let str = content.toString('hex');
+            let calced = crc32b(content);
+            let expected = buf.readUInt32BE(buf.length - 4);
+
+            if (calced !== expected) {
+                console.log(` Checksum does not match:`);
+                console.log(`   base64: ${sample}`);
+                console.log(`      hex: ${str}`);
+                console.log(` expected: 0x${expected.toString(16)} [${expected}]`);
+                //console.log(`should be: 0x${1755222373..toString(16)}`);
+                console.log(`   actual: 0x${calced.toString(16)} [${calced}]`);
+
+                expect(calced).to.equal(buf.readUInt32BE(buf.length - 4));
+            }
+        }
+
+    });
+});
 
 describe("SCTE35", () => {
     describe("SpliceInfoSection", it => {
         it('can roundtrip all samples', async () => {
-
             const base64s = [
                 "/DBGAAET8J+pAP/wBQb+AAAAAAAwAi5DVUVJQAErgX+/CR9TSUdOQUw6OGlTdzllUWlGVndBQUFBQUFBQUJCQT09NwMDaJ6RZQ==",
-                "/DBvAAFDizjpAP/wBQb+K9F+MgBZAhlDVUVJXAL02n+/AQpIRDExMjM0OFQxIQEAAh1DVUVJXAL2U3//AAGb/KUBCUhEQ00xMDY0ODQAAAIdQ1VFSVwC9lR//wAAKTGxAQlIRENNMTA2NDgwAADHDHPR",
-                "/DAgAAAAAAAAAAAADwXgABFYf//+AUmXAAAAAAAAAGXUMaQ=",
-                "/DAlAAAAAAAAAP/wFAUACGxOf+//4Gcd9f4BIPDAAAAAAAAAnIWhIw=="
+                "/DBvAAFDizjpAP/wBQb+K9F+MgBZAhlDVUVJXAL02n+/AQpIRDExMjM0OFQxIQEAAh1DVUVJXAL2U3//AAGb/KUBCUhEQ00xMDY0ODQAAAIdQ1VFSVwC9lR//wAAKTGxAQlIRENNMTA2NDgwAAAkMywl",
+                "/DAgAAAAAAAAAAAADwXgABFYf//+AUmXAAAAAAAAAGUNffk=",
+                "/DAlAAAAAAAAAP/wFAUACGxPf+//4ZoIo/4AFfkAAAAAAAAAgJ61+A=="
             ];
 
             for (let base64 of base64s) {
@@ -31,7 +75,12 @@ describe("SCTE35", () => {
 
                 if (newBase64 !== base64) {
                     
+                    let content = buf.slice(0, buf.length - 4);
+                    let str = content.toString('hex');
+
                     console.log(`Roundtrip failed`);
+                    console.log(` -   Checksummable: ${str}`);
+                    console.log(` -        Checksum: 0x${crc32b(content).toString(16)} [${crc32b(content)}]`);
                     console.log(` - 1st trip base64: ${base64}`);
                     console.log(` - 2nd trip base64: ${newBase64}`);
                     const cs35 = scte35.SCTE35.parseFromB64(base64);
@@ -186,7 +235,7 @@ describe("SCTE35", () => {
             }
         });
         it('can read an immediate splice insert with 4m duration, with an extra byte appended', async() => {
-            const base64 = '/DAgAAAAAAAAAAAADwXgABFYf//+AUmXAAAAAAAAAGXUMaS0';
+            const base64 = '/DAgAAAAAAAAAAAADwXgABFYf//+AUmXAAAAAAAAAGUNffk=';
             const reader = new BitstreamReader();
             reader.addBuffer(Buffer.from(base64, 'base64'));
     
@@ -195,8 +244,7 @@ describe("SCTE35", () => {
             // console.dir(cs35);
 
             let spliceInfo = await SpliceInfoSection.read(reader);
-    
-            expect(spliceInfo.checksum).to.equal(1708405156);
+            expect(spliceInfo.checksum).to.equal(1695383033);
             expect(spliceInfo instanceof NewInsertedSplice).to.be.true;
             if (spliceInfo instanceof NewInsertedSplice) {
                 expect(spliceInfo.ptsAdjustment).to.equal(0);

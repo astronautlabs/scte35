@@ -1,4 +1,5 @@
-import { BitstreamElement, Field, Variant, VariantMarker, DefaultVariant, Reserved } from "@astronautlabs/bitstream";
+import { BitstreamElement, Field, Variant, VariantMarker, DefaultVariant, Reserved, Marker } from "@astronautlabs/bitstream";
+import { crc32b } from "./crc32";
 
 export class SpliceTime extends BitstreamElement {
     @Field(1) specified : boolean;
@@ -64,6 +65,8 @@ export class UnknownSpliceDescriptor extends SpliceDescriptor {
 }
 
 export class SpliceInfoSection extends BitstreamElement {
+    @Marker() $startOfSpliceInfoSection;
+
     @Field(8) tableId : number;
     @Field(1) sectionSyntax : boolean;
     @Field(1) private : boolean;
@@ -117,8 +120,18 @@ export class SpliceInfoSection extends BitstreamElement {
     // algorithm expected by the reader and the number of bytes that exist up to this point. 
     //stuffing : Buffer;
 
-    @Field(32, { presentWhen: i => i.encrypted }) encryptionChecksum : number;
-    @Field(32) checksum : number;
+    @Field(32, { 
+        presentWhen: i => i.encrypted 
+    })
+    encryptionChecksum : number;
+
+    @Marker() $endOfChecksummedRegion;
+
+    @Field(32, {
+        writtenValue: (i : SpliceInfoSection) => 
+            crc32b(i.serialize(i => i.$startOfSpliceInfoSection, i => i.$endOfChecksummedRegion))
+    })
+    checksum : number;
     
 }
 
