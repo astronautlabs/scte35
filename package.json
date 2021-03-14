@@ -1,8 +1,8 @@
 {
   "name": "@astronautlabs/scte35",
   "access": "public",
-  "version": "0.2.0",
-  "description": "",
+  "version": "0.0.1",
+  "description": "Implements the SCTE-35 standard",
   "main": "dist/index.js",
   "directories": {
     "lib": "lib",
@@ -17,27 +17,25 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Comcast/scte35-js.git"
+    "url": "git+https://github.com/astronautlabs/scte35.git"
   },
-  "author": "Comcast VIPER",
+  "author": "Astronaut Labs, LLC",
   "contributors": [
     "Eric Stobbart <eric_stobbart@comcast.com>"
   ],
-  "license": "Apache-2.0",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Comcast/scte35-js/issues"
+    "url": "https://github.com/astronautlabs/scte35/issues"
   },
-  "homepage": "https://github.com/Comcast/scte35-js#readme",
+  "homepage": "https://github.com/astronautlabs/scte35#readme",
   "devDependencies": {
     "@types/chai": "^4.1.7",
     "@types/node": "^10.12.17",
     "chai": "^4.2.0",
-    "nyc": "^13.1.0",
     "razmin": "^1.0.4",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^2.6.2",
     "source-map-support": "^0.5.19",
-    "ts-node": "^7.0.1",
     "typescript": "^4.2.3",
     "zone.js": "^0.11.4"
   },

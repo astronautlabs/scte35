@@ -1,1 +1,1 @@
-export * from './lib/scte35';
+export * from './lib/syntax';
