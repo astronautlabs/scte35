@@ -144,14 +144,14 @@ describe("SCTE35", () => {
 
             let descriptor0 = spliceInfo.descriptors[0];
             if (descriptor0 instanceof NewSegmentationDescriptor) {
-                expect(descriptor0.upid.toString('ascii')).to.equal('HD112348T1');
+                expect(Buffer.from(descriptor0.upid).toString('ascii')).to.equal('HD112348T1');
                 expect(descriptor0.hasDuration).to.be.false;
                 expect(descriptor0.duration).not.to.exist;
             }
 
             let descriptor1 = spliceInfo.descriptors[1];
             if (descriptor1 instanceof NewSegmentationDescriptor) {
-                expect(descriptor1.upid.toString('ascii')).to.equal('HDCM10648');
+                expect(Buffer.from(descriptor1.upid).toString('ascii')).to.equal('HDCM10648');
                 expect(descriptor1.subSegmentNumber).not.to.exist;
                 expect(descriptor1.subSegmentsExpected).not.to.exist;
                 expect(descriptor1.hasDuration).to.be.true;
@@ -160,7 +160,7 @@ describe("SCTE35", () => {
 
             let descriptor2 = spliceInfo.descriptors[2];
             if (descriptor2 instanceof NewSegmentationDescriptor) {
-                expect(descriptor2.upid.toString('ascii')).to.equal('HDCM10648');
+                expect(Buffer.from(descriptor2.upid).toString('ascii')).to.equal('HDCM10648');
                 expect(descriptor2.hasDuration).to.be.true;
                 expect(descriptor2.duration).to.equal(2699697);
             }
@@ -190,14 +190,14 @@ describe("SCTE35", () => {
 
             let descriptor0 = spliceInfo.descriptors[0];
             if (descriptor0 instanceof NewSegmentationDescriptor) {
-                expect(descriptor0.upid.toString('ascii')).to.equal('HD112348T1');
+                expect(Buffer.from(descriptor0.upid).toString('ascii')).to.equal('HD112348T1');
                 expect(descriptor0.hasDuration).to.be.false;
                 expect(descriptor0.duration).not.to.exist;
             }
 
             let descriptor1 = spliceInfo.descriptors[1];
             if (descriptor1 instanceof NewSegmentationDescriptor) {
-                expect(descriptor1.upid.toString('ascii')).to.equal('HDCM10648');
+                expect(Buffer.from(descriptor1.upid).toString('ascii')).to.equal('HDCM10648');
                 expect(descriptor1.subSegmentNumber).to.equal(1);
                 expect(descriptor1.subSegmentsExpected).to.equal(2);
                 expect(descriptor1.hasDuration).to.be.true;
@@ -206,7 +206,7 @@ describe("SCTE35", () => {
 
             let descriptor2 = spliceInfo.descriptors[2];
             if (descriptor2 instanceof NewSegmentationDescriptor) {
-                expect(descriptor2.upid.toString('ascii')).to.equal('HDCM10648');
+                expect(Buffer.from(descriptor2.upid).toString('ascii')).to.equal('HDCM10648');
                 expect(descriptor2.hasDuration).to.be.true;
                 expect(descriptor2.duration).to.equal(2699697);
             }

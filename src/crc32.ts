@@ -7,7 +7,7 @@
  * 
  * @param message The data to calculate the checksum for
  */
-export function crc32b(message : Buffer)
+export function crc32b(message : Uint8Array)
 {
    let crc = BigInt(0xFFFFFFFF);
    let msb : bigint;

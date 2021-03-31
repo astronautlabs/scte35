@@ -53,7 +53,7 @@ export class SpliceDescriptor extends BitstreamElement {
     @Field(0) $endOfDescriptorSyntax;
     
     @Field(i => i.length - i.measure(i => i.$startOfDescriptor, i => i.$endOfDescriptorSyntax) / 8) 
-    remainder : Buffer;
+    remainder : Uint8Array;
 
     @Field(0) $endOfDescriptor;
 }
@@ -61,7 +61,7 @@ export class SpliceDescriptor extends BitstreamElement {
 @DefaultVariant()
 export class UnknownSpliceDescriptor extends SpliceDescriptor {
     @Field((i : SpliceDescriptor) => (i.length * 8 - i.measureFrom(i => i.identifier)) / 8)
-    private : Buffer;
+    private : Uint8Array;
 }
 
 export class SpliceInfoSection extends BitstreamElement {
@@ -118,7 +118,7 @@ export class SpliceInfoSection extends BitstreamElement {
 
     // Encryption is not properly supported here. The amount of stuffing bytes is dependent on the encryption 
     // algorithm expected by the reader and the number of bytes that exist up to this point. 
-    //stuffing : Buffer;
+    //stuffing : Uint8Array;
 
     @Field(32, { 
         presentWhen: i => i.encrypted 
@@ -139,7 +139,7 @@ export class SpliceInfoSection extends BitstreamElement {
 export class PrivateCommandSplice extends SpliceInfoSection {
     @Field(32) identifier : number;
     @Field((i : PrivateCommandSplice) => (Math.floor(i.sectionLength * 8 - i.measureFrom(i => i.protocolVersion)) / 8)) 
-    buffer : Buffer;
+    buffer : Uint8Array;
 }
 
 @Variant((i : SpliceDescriptor) => i.identifier === 'CUEI' && i.tag === 0x00)
@@ -152,7 +152,7 @@ export class DTMFDescriptor extends SpliceDescriptor {
     @Field(8) preroll : number;
     @Field(3) dtmfCount : number;
     @Reserved(5) reserved : number;
-    @Field(i => i.dtmfCount) chars : Buffer;
+    @Field(i => i.dtmfCount) chars : Uint8Array;
 }
 
 @Variant((i : SpliceDescriptor) => i.identifier === 'CUEI' && i.tag === 0x02)
@@ -212,7 +212,7 @@ export class NewSegmentationDescriptor extends SegmentationDescriptor {
 
     @Field(8) upidType : number;
     @Field(8) upidLength : number;
-    @Field(i => i.upidLength * 8) upid : Buffer;
+    @Field(i => i.upidLength * 8) upid : Uint8Array;
     @Field(8) typeId : number;
     @Field(8) segmentNumber : number;
     @Field(8) segmentsExpected : number;
