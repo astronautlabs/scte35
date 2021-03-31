@@ -62,7 +62,7 @@ describe("SCTE35", () => {
                 const reader = new BitstreamReader();
                 reader.addBuffer(Buffer.from(base64, 'base64'));
         
-                let spliceInfo = await SpliceInfoSection.read(reader);
+                let spliceInfo = await SpliceInfoSection.readBlocking(reader);
 
                 const streamBuf = new WritableStreamBuffer();
                 const writer = new BitstreamWriter(streamBuf);
@@ -89,7 +89,7 @@ describe("SCTE35", () => {
                     const reader = new BitstreamReader();
                     reader.addBuffer(Buffer.from(newBase64, 'base64'));
 
-                    let spliceInfo2 = await SpliceInfoSection.read(reader);
+                    let spliceInfo2 = await SpliceInfoSection.readBlocking(reader);
 
                     console.log(` - 2nd trip @/scte35:`);
                     console.dir(spliceInfo2);
@@ -104,7 +104,7 @@ describe("SCTE35", () => {
             const reader = new BitstreamReader();
             reader.addBuffer(Buffer.from(base64, 'base64'));
     
-            let spliceInfo = await SpliceInfoSection.read(reader);
+            let spliceInfo = await SpliceInfoSection.readBlocking(reader);
     
             // console.log(`Resulting object:`);
             // console.dir(spliceInfo);
@@ -131,7 +131,7 @@ describe("SCTE35", () => {
             const reader = new BitstreamReader();
             reader.addBuffer(Buffer.from(base64, 'base64'));
 
-            let spliceInfo = await SpliceInfoSection.read(reader);
+            let spliceInfo = await SpliceInfoSection.readBlocking(reader);
             //console.dir(spliceInfo);
 
             expect(spliceInfo.tableId).to.equal(252);
@@ -177,7 +177,7 @@ describe("SCTE35", () => {
             const reader = new BitstreamReader();
             reader.addBuffer(Buffer.from(base64, 'base64'));
 
-            let spliceInfo = await SpliceInfoSection.read(reader);
+            let spliceInfo = await SpliceInfoSection.readBlocking(reader);
             //console.dir(spliceInfo);
 
             expect(spliceInfo.tableId).to.equal(252);
@@ -222,7 +222,7 @@ describe("SCTE35", () => {
             const reader = new BitstreamReader();
             reader.addBuffer(Buffer.from(base64, 'base64'));
 
-            let spliceInfo = await SpliceInfoSection.read(reader);
+            let spliceInfo = await SpliceInfoSection.readBlocking(reader);
             expect(spliceInfo.checksum).to.equal(1695383033);
             expect(spliceInfo instanceof NewInsertedSplice).to.be.true;
             if (spliceInfo instanceof NewInsertedSplice) {
@@ -241,7 +241,7 @@ describe("SCTE35", () => {
             const reader = new BitstreamReader();
             reader.addBuffer(Buffer.from(base64, 'base64'));
     
-            let spliceInfo = await SpliceInfoSection.read(reader);
+            let spliceInfo = await SpliceInfoSection.readBlocking(reader);
     
             expect(spliceInfo.checksum).to.equal(2157884920);
             expect(spliceInfo instanceof NewInsertedSplice).to.be.true;
@@ -261,7 +261,7 @@ describe("SCTE35", () => {
             const reader = new BitstreamReader();
             reader.addBuffer(Buffer.from(base64, 'base64'));
     
-            let spliceInfo = await SpliceInfoSection.read(reader);
+            let spliceInfo = await SpliceInfoSection.readBlocking(reader);
     
             expect(spliceInfo.checksum).to.equal(2626003235);
             expect(spliceInfo instanceof NewInsertedSplice).to.be.true;
